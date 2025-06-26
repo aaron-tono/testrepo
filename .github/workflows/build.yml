@@ -1,0 +1,40 @@
+name: Simulate Build Status on PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  simulate-status:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Extract branch name
+      id: extract
+      run: echo "branch=${GITHUB_HEAD_REF}" >> $GITHUB_OUTPUT
+
+    - name: Simulate in-progress
+      if: contains(steps.extract.outputs.branch, 'inprogress')
+      run: |
+        echo "Simulating in-progress build..."
+        sleep 300  # 5 mins to stay 'in progress'
+
+    - name: Simulate failure
+      if: contains(steps.extract.outputs.branch, 'fail')
+      run: |
+        echo "Simulating failure..."
+        exit 1
+
+    - name: Simulate success
+      if: contains(steps.extract.outputs.branch, 'success')
+      run: |
+        echo "Simulating success..."
+        exit 0
+
+    - name: Default (no-op)
+      if: ${{ !contains(steps.extract.outputs.branch, 'simulate') }}
+      run: echo "No simulation pattern matched."
+
